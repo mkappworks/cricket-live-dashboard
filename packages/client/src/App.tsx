@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { socket } from './socket'
 import { LiveOverPanel } from './components/LiveOverPanel'
 import { OverStatsPanel } from './components/OverStatsPanel'
-import type { BallResult, MatchState, OverStat } from './types/cricket'
+import type { BallResult, MatchState, OverStat } from '@cricket-live/shared'
+import { SOCKET_EVENTS } from '@cricket-live/shared'
 
 export default function App() {
   const [currentOver, setCurrentOver] = useState(1)
@@ -25,18 +26,18 @@ export default function App() {
     socket.on('connect', () => setConnected(true))
     socket.on('disconnect', () => setConnected(false))
 
-    socket.on('match_state', (state: MatchState) => {
+    socket.on(SOCKET_EVENTS.MATCH_STATE, (state: MatchState) => {
       setCurrentOver(state.currentOver)
       setCurrentBalls(state.currentBalls)
       setCompletedOvers(state.completedOvers)
     })
 
-    socket.on('ball_update', ({ ball, over }: { ball: BallResult; over: number }) => {
+    socket.on(SOCKET_EVENTS.BALL_UPDATE, ({ ball, over }: { ball: BallResult; over: number }) => {
       setCurrentOver(over)
       setCurrentBalls((prev) => [...prev, ball])
     })
 
-    socket.on('over_complete', (over: OverStat) => {
+    socket.on(SOCKET_EVENTS.OVER_COMPLETE, (over: OverStat) => {
       setCompletedOvers((prev) => [...prev, over])
       setCurrentBalls([])
       setCurrentOver((n) => n + 1)
@@ -45,9 +46,9 @@ export default function App() {
     return () => {
       socket.off('connect')
       socket.off('disconnect')
-      socket.off('match_state')
-      socket.off('ball_update')
-      socket.off('over_complete')
+      socket.off(SOCKET_EVENTS.MATCH_STATE)
+      socket.off(SOCKET_EVENTS.BALL_UPDATE)
+      socket.off(SOCKET_EVENTS.OVER_COMPLETE)
     }
   }, [])
 
@@ -92,7 +93,7 @@ function ScorerControl() {
   const [extraType, setExtraType] = useState<'wide' | 'no-ball' | 'bye' | 'leg-bye' | ''>('')
 
   function submitBall() {
-    socket.emit('add_ball', {
+    socket.emit(SOCKET_EVENTS.ADD_BALL, {
       runs,
       isWicket,
       isExtra,
@@ -176,7 +177,7 @@ function ScorerControl() {
 
         {/* Reset over */}
         <button
-          onClick={() => socket.emit('reset_match')}
+          onClick={() => socket.emit(SOCKET_EVENTS.RESET_MATCH)}
           className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white/60 hover:text-white font-medium rounded-lg text-sm transition-colors border border-white/10"
         >
           Reset Over

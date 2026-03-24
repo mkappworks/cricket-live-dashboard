@@ -1,4 +1,4 @@
-import type { BallResult } from '../types/cricket'
+import type { BallResult } from '@cricket-live/shared'
 
 type Props = {
   overNumber: number

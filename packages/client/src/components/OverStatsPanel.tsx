@@ -1,4 +1,4 @@
-import type { OverStat } from '../types/cricket'
+import type { OverStat } from '@cricket-live/shared'
 
 type Props = {
   completedOvers: OverStat[]
