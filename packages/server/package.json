@@ -10,6 +10,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@cricket-live/shared": "*",
     "@libsql/client": "^0.14.0",
     "cors": "^2.8.5",
     "drizzle-orm": "^0.36.4",
