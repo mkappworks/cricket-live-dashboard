@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { eq, asc } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { overStats } from '../db/schema.js'
-import type { BallResult } from '../types/cricket.js'
+import type { BallResult } from '@cricket-live/shared'
 
 export const statsRouter = Router()
 

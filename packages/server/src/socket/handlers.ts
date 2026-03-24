@@ -2,7 +2,8 @@ import type { Server, Socket } from 'socket.io'
 import { eq, asc } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { overStats } from '../db/schema.js'
-import type { BallResult, BallInput, MatchState, OverStat } from '../types/cricket.js'
+import type { BallResult, BallInput, MatchState, OverStat } from '@cricket-live/shared'
+import { SOCKET_EVENTS } from '@cricket-live/shared'
 
 const DEFAULT_MATCH_ID = 'match-1'
 
@@ -40,9 +41,9 @@ export async function initMatchState() {
 
 export function registerSocketHandlers(io: Server, socket: Socket) {
   // Send current state to the newly connected client
-  socket.emit('match_state', matchState)
+  socket.emit(SOCKET_EVENTS.MATCH_STATE, matchState)
 
-  socket.on('add_ball', async (input: BallInput) => {
+  socket.on(SOCKET_EVENTS.ADD_BALL, async (input: BallInput) => {
     const ballNumber = matchState.currentBalls.length + 1
 
     const ball: BallResult = {
@@ -57,7 +58,7 @@ export function registerSocketHandlers(io: Server, socket: Socket) {
     matchState.currentBalls.push(ball)
 
     // Emit ball_update to all connected clients
-    io.emit('ball_update', { ball, over: matchState.currentOver })
+    io.emit(SOCKET_EVENTS.BALL_UPDATE, { ball, over: matchState.currentOver })
 
     // Over is complete after 6 legal deliveries
     // (extras like wides/no-balls don't count toward the 6, but for simplicity we count all balls)
@@ -99,14 +100,14 @@ export function registerSocketHandlers(io: Server, socket: Socket) {
       matchState.currentBalls = []
 
       // Emit over_complete to all clients
-      io.emit('over_complete', completedOver)
+      io.emit(SOCKET_EVENTS.OVER_COMPLETE, completedOver)
     }
   })
 
-  socket.on('reset_match', async () => {
+  socket.on(SOCKET_EVENTS.RESET_MATCH, async () => {
     // Clear in-memory state only; DB records remain
     matchState.currentBalls = []
     matchState.currentOver = matchState.completedOvers.length + 1
-    io.emit('match_state', matchState)
+    io.emit(SOCKET_EVENTS.MATCH_STATE, matchState)
   })
 }
