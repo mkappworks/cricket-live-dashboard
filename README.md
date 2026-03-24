@@ -77,6 +77,35 @@ cricket-live-dashboard/
 
 ---
 
+## Data Flow
+
+```mermaid
+sequenceDiagram
+    participant C as Client (React)
+    participant S as Server (Express)
+    participant DB as SQLite
+
+    Note over C,S: On connect
+    S-->>C: match_state (full state)
+    C->>S: GET /api/stats/:matchId
+    DB-->>S: persisted overs
+    S-->>C: OverStat[]
+
+    Note over C,S: Scoring a ball
+    C->>S: add_ball (BallInput)
+    S-->>C: ball_update (BallResult + over number)
+
+    Note over C,S: After 6 legal deliveries
+    S->>DB: INSERT over_stats
+    S-->>C: over_complete (OverStat)
+
+    Note over C,S: Reset
+    C->>S: reset_match
+    S-->>C: match_state (cleared over)
+```
+
+---
+
 ## Getting Started
 
 ### Prerequisites
