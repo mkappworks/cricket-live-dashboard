@@ -32,12 +32,13 @@ Drizzle is lighter weight, has no schema compilation/generation step, and the sc
 | Layer     | Technology                    |
 | --------- | ----------------------------- |
 | Monorepo  | npm workspaces + Turborepo    |
+| Shared    | `@cricket-live/shared`        |
 | Frontend  | React 18 + Vite + TailwindCSS |
 | Backend   | Node.js + Express             |
 | Real-time | Socket.io (server + client)   |
 | ORM       | Drizzle ORM                   |
-| Database  | SQLite (better-sqlite3)       |
-| Language  | TypeScript (both packages)    |
+| Database  | SQLite (libsql)               |
+| Language  | TypeScript (all packages)     |
 
 ---
 
@@ -50,15 +51,19 @@ cricket-live-dashboard/
 ├── tsconfig.base.json        # shared TypeScript config
 ├── README.md
 ├── packages/
+│   ├── shared/               # shared types + constants
+│   │   └── src/
+│   │       ├── types/cricket.ts    # BallResult, OverStat, MatchState, BallInput
+│   │       ├── events.ts           # SOCKET_EVENTS constants
+│   │       └── index.ts            # re-exports
 │   ├── client/               # React app (Vite)
 │   │   ├── vite.config.ts    # proxies /api and /socket.io → server
 │   │   └── src/
 │   │       ├── App.tsx           # layout + socket subscriptions
 │   │       ├── socket.ts         # Socket.io client singleton
-│   │       ├── components/
-│   │       │   ├── LiveOverPanel.tsx   # Panel 1 — ball-by-ball (ephemeral)
-│   │       │   └── OverStatsPanel.tsx  # Panel 2 — over history (persisted)
-│   │       └── types/cricket.ts
+│   │       └── components/
+│   │           ├── LiveOverPanel.tsx   # Panel 1 — ball-by-ball (ephemeral)
+│   │           └── OverStatsPanel.tsx  # Panel 2 — over history (persisted)
 │   └── server/               # Express + Socket.io
 │       ├── drizzle.config.ts
 │       └── src/
@@ -67,8 +72,7 @@ cricket-live-dashboard/
 │           │   ├── schema.ts         # Drizzle table definitions
 │           │   └── client.ts         # Drizzle + SQLite singleton
 │           ├── socket/handlers.ts    # in-memory match state + events
-│           ├── routes/stats.ts       # GET /api/stats/:matchId
-│           └── types/cricket.ts
+│           └── routes/stats.ts       # GET /api/stats/:matchId
 ```
 
 ---
