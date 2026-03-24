@@ -6,33 +6,38 @@ A real-time cricket scoring dashboard built as a TypeScript monorepo. Two live p
 
 ## Architecture Decisions
 
-### Monorepo — npm workspaces
-Native npm workspaces with no extra tooling (Turborepo, Nx). Two packages share a single `node_modules` and can run together with one command. Simple, zero configuration overhead.
+### Monorepo — npm workspaces + Turborepo
+
+npm workspaces with Turborepo for parallel task execution. Two packages share a single `node_modules`. Turborepo runs `dev` tasks in parallel and caches `build` outputs.
 
 ### Real-time — Socket.io
+
 Both panels are driven by Socket.io WebSocket events:
+
 - **Panel 1 (Live Over)** — receives `ball_update` events only. Purely ephemeral; no database involved.
 - **Panel 2 (Over Stats)** — receives `over_complete` events when an over finishes. On initial page load it hydrates from `GET /api/stats/:matchId` (one REST call) to show persisted history.
 
 ### Database — SQLite via Drizzle ORM
+
 Over statistics have a fixed, well-known schema (over number, runs, wickets, extras, ball-by-ball results). A relational store fits this better than a document store. SQLite requires zero infrastructure — it's a single file. Drizzle ORM is SQL-first with no compilation step; the schema is plain TypeScript and easy to modify. Migrating to PostgreSQL later requires only changing `drizzle.config.ts`.
 
 ### Why Drizzle over Prisma
+
 Drizzle is lighter weight, has no schema compilation/generation step, and the schema lives entirely in TypeScript files alongside the application code. It also produces more predictable SQL.
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Monorepo | npm workspaces |
-| Frontend | React 18 + Vite + TailwindCSS |
-| Backend | Node.js + Express |
-| Real-time | Socket.io (server + client) |
-| ORM | Drizzle ORM |
-| Database | SQLite (better-sqlite3) |
-| Language | TypeScript (both packages) |
+| Layer     | Technology                    |
+| --------- | ----------------------------- |
+| Monorepo  | npm workspaces + Turborepo    |
+| Frontend  | React 18 + Vite + TailwindCSS |
+| Backend   | Node.js + Express             |
+| Real-time | Socket.io (server + client)   |
+| ORM       | Drizzle ORM                   |
+| Database  | SQLite (better-sqlite3)       |
+| Language  | TypeScript (both packages)    |
 
 ---
 
@@ -40,7 +45,8 @@ Drizzle is lighter weight, has no schema compilation/generation step, and the sc
 
 ```
 cricket-live-dashboard/
-├── package.json              # root — npm workspaces
+├── package.json              # root — npm workspaces + turbo scripts
+├── turbo.json                # Turborepo pipeline config
 ├── tsconfig.base.json        # shared TypeScript config
 ├── README.md
 ├── packages/
@@ -70,6 +76,7 @@ cricket-live-dashboard/
 ## Getting Started
 
 ### Prerequisites
+
 - Node.js 20+
 - npm 10+
 
@@ -81,42 +88,60 @@ cd cricket-live-dashboard
 npm install
 ```
 
-### Start development
+### Development
 
 ```bash
 npm run dev
 ```
 
-This starts both packages in parallel:
-- **Server** on `http://localhost:3001`
-- **Client** on `http://localhost:5173`
+Turborepo starts both packages in parallel:
+
+- **Server** on `http://localhost:3001` (tsx watch — hot reload)
+- **Client** on `http://localhost:5173` (Vite HMR)
 
 Open `http://localhost:5173` in your browser.
 
-### Build for production
+### Production build
 
 ```bash
 npm run build
 ```
 
-### Inspect the database
+Compiles both packages (Vite for client → `packages/client/dist/`, tsc for server → `packages/server/dist/`). Build outputs are cached by Turborepo — unchanged packages are skipped on subsequent runs.
+
+### Run in production
 
 ```bash
+# After building, start the server
+node packages/server/dist/index.js
+```
+
+Serve `packages/client/dist/` via a static file host (nginx, Caddy, etc.) or add a static middleware to the Express server.
+
+### Database
+
+The SQLite database file (`cricket-live-dashboard.db`) is created automatically on first server start — no manual setup needed.
+
+```bash
+# Inspect the database via Drizzle Studio
 cd packages/server
 npx drizzle-kit studio
+
+# Push schema changes to the DB (after editing schema.ts)
+npx drizzle-kit push
 ```
 
 ---
 
 ## Socket Events Reference
 
-| Event | Direction | Payload | Description |
-|---|---|---|---|
-| `match_state` | server → client | `MatchState` | Full state sent on connect |
-| `ball_update` | server → client | `{ ball: BallResult, over: number }` | Each new ball (Panel 1) |
-| `over_complete` | server → client | `OverStat` | Over finished, DB already written (Panel 2) |
-| `add_ball` | client → server | `BallInput` | Submit a ball result |
-| `reset_match` | client → server | — | Clear current over from memory |
+| Event           | Direction       | Payload                              | Description                                 |
+| --------------- | --------------- | ------------------------------------ | ------------------------------------------- |
+| `match_state`   | server → client | `MatchState`                         | Full state sent on connect                  |
+| `ball_update`   | server → client | `{ ball: BallResult, over: number }` | Each new ball (Panel 1)                     |
+| `over_complete` | server → client | `OverStat`                           | Over finished, DB already written (Panel 2) |
+| `add_ball`      | client → server | `BallInput`                          | Submit a ball result                        |
+| `reset_match`   | client → server | —                                    | Clear current over from memory              |
 
 ---
 
@@ -139,22 +164,22 @@ npx drizzle-kit studio
 ```ts
 // Ephemeral — in-memory only
 type BallResult = {
-  ball: number          // 1–6
-  runs: number
-  isWicket: boolean
-  isExtra: boolean
-  extraType?: 'wide' | 'no-ball' | 'bye' | 'leg-bye'
-  description?: string
-}
+  ball: number; // 1–6
+  runs: number;
+  isWicket: boolean;
+  isExtra: boolean;
+  extraType?: "wide" | "no-ball" | "bye" | "leg-bye";
+  description?: string;
+};
 
 // Persisted to SQLite
 type OverStat = {
-  id?: number
-  matchId: string
-  overNumber: number
-  runs: number
-  wickets: number
-  extras: number
-  balls: BallResult[]   // stored as JSON string in DB
-}
+  id?: number;
+  matchId: string;
+  overNumber: number;
+  runs: number;
+  wickets: number;
+  extras: number;
+  balls: BallResult[]; // stored as JSON string in DB
+};
 ```

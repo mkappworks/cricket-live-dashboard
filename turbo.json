@@ -1,0 +1,14 @@
+{
+  "tasks": {
+    "dev": {
+      "persistent": true,
+      "cache": false
+    },
+    "build": {
+      "outputs": [
+        "dist/**",
+        ".vite/**"
+      ]
+    }
+  }
+}

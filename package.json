@@ -2,11 +2,15 @@
   "name": "cricket-live-dashboard",
   "version": "1.0.0",
   "private": true,
+  "packageManager": "npm@11.11.0",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspaces --if-present",
-    "build": "npm run build --workspaces --if-present"
+    "dev": "turbo dev",
+    "build": "turbo build"
+  },
+  "devDependencies": {
+    "turbo": "^2.8.20"
   }
 }
