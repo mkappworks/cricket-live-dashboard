@@ -8,7 +8,11 @@ A real-time cricket scoring dashboard built as a TypeScript monorepo. Two live p
 
 ### Monorepo — npm workspaces + Turborepo
 
-npm workspaces with Turborepo for parallel task execution. Two packages share a single `node_modules`. Turborepo runs `dev` tasks in parallel and caches `build` outputs.
+npm workspaces with Turborepo for parallel task execution. Three packages share a single `node_modules`. Turborepo runs `dev` tasks in parallel and caches `build` outputs.
+
+### Shared package — `@cricket-live/shared`
+
+A zero-build internal package consumed by both client and server. Contains all shared TypeScript types (`BallResult`, `OverStat`, `MatchState`, `BallInput`) and `SOCKET_EVENTS` constants — the single source of truth for the client-server contract. Both Vite and tsx resolve it directly from source with no compilation step.
 
 ### Real-time — Socket.io
 
