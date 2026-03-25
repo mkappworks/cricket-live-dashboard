@@ -1,0 +1,6 @@
+node_modules
+dist
+.vite
+build
+*.db
+packages/server/src/db/migrations
