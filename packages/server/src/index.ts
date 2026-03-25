@@ -1,37 +1,28 @@
+import 'dotenv/config'
 import express from 'express'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
 import cors from 'cors'
-import { sql } from 'drizzle-orm'
-import { db } from './db/client.js'
+import { fromNodeHeaders, toNodeHandler } from 'better-auth/node'
+import { auth } from './auth.js'
 import { statsRouter } from './routes/stats.js'
-import { registerSocketHandlers, initMatchState } from './socket/handlers.js'
+import { matchesRouter, setIo } from './routes/matches.js'
+import { requireAuth } from './middleware/requireAuth.js'
+import { registerSocketHandlers } from './socket/handlers.js'
+import { userSocketMap } from './socket/userSocketMap.js'
 
 const PORT = 3001
 const CLIENT_URL = 'http://localhost:5173'
 
 const app = express()
-app.use(cors({ origin: CLIENT_URL }))
+app.use(cors({ origin: CLIENT_URL, credentials: true }))
 app.use(express.json())
 
-async function ensureSchema() {
-  await db.run(sql`
-    CREATE TABLE IF NOT EXISTS over_stats (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      match_id TEXT NOT NULL,
-      over_number INTEGER NOT NULL,
-      runs INTEGER NOT NULL,
-      wickets INTEGER NOT NULL,
-      extras INTEGER NOT NULL,
-      balls TEXT NOT NULL,
-      bowler TEXT,
-      created_at INTEGER,
-      UNIQUE(match_id, over_number)
-    )
-  `)
-}
+// better-auth handles all /api/auth/* routes
+app.all('/api/auth/*', toNodeHandler(auth))
 
 app.use('/api/stats', statsRouter)
+app.use('/api/matches', requireAuth, matchesRouter)
 
 const httpServer = createServer(app)
 
@@ -39,24 +30,43 @@ const io = new Server(httpServer, {
   cors: {
     origin: CLIENT_URL,
     methods: ['GET', 'POST'],
+    credentials: true,
   },
 })
 
+// Inject io into matches router for real-time notifications
+setIo(io)
+
+// Socket.io auth middleware
+io.use(async (socket, next) => {
+  try {
+    const session = await auth.api.getSession({
+      headers: fromNodeHeaders(socket.handshake.headers),
+    })
+    if (!session) {
+      return next(new Error('Unauthorized'))
+    }
+    socket.data.userId = session.user.id
+    socket.data.user = session.user
+    next()
+  } catch {
+    next(new Error('Auth error'))
+  }
+})
+
 io.on('connection', (socket) => {
-  console.log(`Client connected: ${socket.id}`)
+  const userId: string = socket.data.userId
+  console.log(`Client connected: ${socket.id} (user: ${userId})`)
+  userSocketMap.set(userId, socket.id)
+
   registerSocketHandlers(io, socket)
+
   socket.on('disconnect', () => {
     console.log(`Client disconnected: ${socket.id}`)
+    userSocketMap.delete(userId)
   })
 })
 
-async function start() {
-  await ensureSchema()
-  await initMatchState()
-
-  httpServer.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`)
-  })
-}
-
-start().catch(console.error)
+httpServer.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`)
+})
