@@ -10,7 +10,8 @@ function getBallStyle(ball: BallResult): string {
   if (ball.runs === 6) return 'bg-green-500 text-white border-green-600'
   if (ball.runs === 4) return 'bg-emerald-400 text-white border-emerald-500'
   if (ball.isExtra) return 'bg-blue-400 text-white border-blue-500'
-  if (ball.runs === 0) return 'bg-gray-200 text-gray-600 border-gray-300'
+  if (ball.runs === 0)
+    return 'bg-gray-200 text-gray-600 border-gray-300 dark:bg-gray-600 dark:text-gray-300 dark:border-gray-500'
   return 'bg-yellow-300 text-gray-800 border-yellow-400'
 }
 
@@ -23,7 +24,7 @@ function getBallLabel(ball: BallResult): string {
       bye: 'B',
       'leg-bye': 'Lb',
     }
-    return ball.extraType ? shortMap[ball.extraType] ?? 'E' : 'E'
+    return ball.extraType ? (shortMap[ball.extraType] ?? 'E') : 'E'
   }
   return String(ball.runs)
 }
@@ -35,16 +36,14 @@ export function LiveOverPanel({ overNumber, balls }: Props) {
   const wickets = balls.filter((b) => b.isWicket).length
 
   return (
-    <div className="bg-white rounded-2xl shadow-md p-6 flex flex-col gap-4">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6 flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-800">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">
           Over {overNumber}
-          <span className="text-sm font-normal text-gray-500 ml-2">
-            (Live)
-          </span>
+          <span className="text-sm font-normal text-gray-500 dark:text-gray-400 ml-2">(Live)</span>
         </h2>
         {balls.length > 0 && (
-          <span className="text-sm text-gray-600 font-medium">
+          <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">
             {totalRuns} runs · {wickets} wkt{wickets !== 1 ? 's' : ''}
           </span>
         )}
@@ -64,7 +63,7 @@ export function LiveOverPanel({ overNumber, balls }: Props) {
           ) : (
             <div
               key={idx}
-              className="w-12 h-12 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-300 text-xs"
+              className="w-12 h-12 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-300 dark:text-gray-600 text-xs"
             >
               {idx + 1}
             </div>
@@ -73,7 +72,7 @@ export function LiveOverPanel({ overNumber, balls }: Props) {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-3 text-xs text-gray-500 pt-1 border-t border-gray-100">
+      <div className="flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400 pt-1 border-t border-gray-100 dark:border-gray-700">
         <span className="flex items-center gap-1">
           <span className="inline-block w-3 h-3 rounded-full bg-red-500" /> Wicket
         </span>
@@ -95,7 +94,7 @@ export function LiveOverPanel({ overNumber, balls }: Props) {
       </div>
 
       {balls.length === 0 && (
-        <p className="text-gray-400 text-sm text-center py-2">
+        <p className="text-gray-400 dark:text-gray-500 text-sm text-center py-2">
           Waiting for first ball...
         </p>
       )}
