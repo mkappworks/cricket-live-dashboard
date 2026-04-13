@@ -33,16 +33,42 @@ Drizzle is lighter weight, has no schema compilation/generation step, and the sc
 
 ## Tech Stack
 
-| Layer     | Technology                    |
-| --------- | ----------------------------- |
-| Monorepo  | npm workspaces + Turborepo    |
-| Shared    | `@cricket-live/shared`        |
-| Frontend  | React 18 + Vite + TailwindCSS |
-| Backend   | Node.js + Express             |
-| Real-time | Socket.io (server + client)   |
-| ORM       | Drizzle ORM                   |
-| Database  | SQLite (libsql)               |
-| Language  | TypeScript (all packages)     |
+### Core Infrastructure
+| Component | Technology | Version | Purpose |
+| --------- | ---------- | ------- | ------- |
+| **Monorepo** | npm workspaces + Turborepo | 2.8.20 | Manages three packages with parallel task execution and build caching |
+| **Language** | TypeScript | 5.3.3 | Type-safe development across all packages |
+| **Node.js** | Node.js runtime | 20+ | Server runtime environment |
+
+### Frontend Stack
+| Component | Technology | Version | Purpose |
+| --------- | ---------- | ------- | ------- |
+| **UI Framework** | React | 18.2.0 | Component-based UI library |
+| **Build Tool** | Vite | 5.0.12 | Fast build tooling with HMR |
+| **Styling** | TailwindCSS | 3.4.1 | Utility-first CSS framework |
+| **Routing** | TanStack Router | 1.168.3 | Type-safe client routing |
+| **State Management** | TanStack Query | 5.95.2 | Server state and caching |
+| **Forms** | TanStack Form + Zod | 1.28.5 + 3.25.76 | Type-safe form handling with validation |
+| **HTTP Client** | Axios | 1.13.6 | Promise-based HTTP requests |
+| **WebSocket** | Socket.io Client | 4.7.4 | Real-time bidirectional communication |
+| **Auth** | Better Auth | 1.5.6 | Authentication framework |
+
+### Backend Stack
+| Component | Technology | Version | Purpose |
+| --------- | ---------- | ------- | ------- |
+| **Server Framework** | Express | 4.18.2 | Lightweight HTTP server |
+| **TypeScript Runtime** | tsx | 4.7.0 | Execute TypeScript directly with hot reload |
+| **ORM** | Drizzle ORM | 0.45.1 | Type-safe SQL with no code generation |
+| **Database** | SQLite (libsql) | 0.14.0 | Lightweight relational database |
+| **WebSocket** | Socket.io Server | 4.7.4 | Real-time event broadcasting |
+| **Email** | Resend | 6.9.4 | Email delivery service |
+| **Auth** | Better Auth | 1.5.6 | Authentication framework |
+| **Utilities** | nanoid | 3.3.11 | URL-friendly unique IDs |
+
+### Shared Package
+| Component | Purpose |
+| --------- | ------- |
+| **@cricket-live/shared** | Zero-build internal package with shared TypeScript types (`BallResult`, `OverStat`, `MatchState`, `BallInput`) and `SOCKET_EVENTS` constants — single source of truth for client-server contract |
 
 ---
 
